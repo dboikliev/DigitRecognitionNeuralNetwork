@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DigitRecognition;
+using MathNet.Numerics.LinearAlgebra;
+using System;
 
 namespace DigitRecognitionNeuralNetwork
 {
@@ -10,6 +8,8 @@ namespace DigitRecognitionNeuralNetwork
     {
         static void Main(string[] args)
         {
+            var net = new Network(784, 40, 1);
+            net.Train(new[] { Tuple.Create(Matrix<double>.Build.Random(784, 1), Matrix<double>.Build.Random(1, 1)) });
         }
     }
 }
