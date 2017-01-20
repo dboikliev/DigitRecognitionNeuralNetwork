@@ -13,54 +13,37 @@ namespace DigitRecognitionNeuralNetwork
     {
         static void Main()
         {
+
+
+
             var watch = Stopwatch.StartNew();
 
             Console.WriteLine("Network initialization starts: " + watch.Elapsed);
-            var net = new Network(784, 40, 10);
+            var net = new Network(784, 30, 10);
             Console.WriteLine("Network  initialization finished: " + watch.Elapsed);
 
             Console.WriteLine("Training set starts loading: " + watch.Elapsed);
-            using (var reader = new StreamReader(File.Open(@".\data\train\train.json", FileMode.Open)))
+            using (var reader = new StreamReader(File.Open("./data/train/train.json", FileMode.Open)))
             {
                 var json = reader.ReadToEnd();
                 var obj = JsonConvert.DeserializeObject<Image[]>(json);
-                Console.WriteLine(string.Join(", ", obj));
-
-                var trainingSetInput = obj.Select(img =>
+                var data = obj.Select(img =>
                 {
-                    var imageData = Matrix<double>.Build.DenseOfColumnVectors(Vector<double>.Build.DenseOfArray(img.Pixels));
+                    var imageData = Matrix<double>.Build.DenseOfColumnVectors(Vector<double>.Build.DenseOfArray(img.Pixels.Select(p => p > 0 ? 1D : 0D).ToArray()));
                     double[] labels = new double[10];
                     labels[img.Label] = 1;
                     var labelData = Matrix<double>.Build.DenseOfColumnVectors(Vector<double>.Build.DenseOfArray(labels));
 
                     return Tuple.Create(imageData, labelData);
-                }).OrderBy(_ => Guid.NewGuid()).Take(10000).ToArray();
+                }).OrderBy(_ => Guid.NewGuid());
+                var trainingSetInput = data.Take(50000).ToArray();
+                var testData = data.Skip(50000).Take(10000).ToArray();
 
                 Console.WriteLine("Training set finished loading: " + watch.Elapsed);
                 Control.TryUseNativeMKL();
-                //var trainingData = new[]
-                //{
-                //    Vector<double>.Build.DenseOfArray(new [] { 0D }),
-                //    Vector<double>.Build.DenseOfArray(new [] { 1D }),
-                //};
 
-                //var trainingLabels = new[]
-                //{
-                //    Vector<double>.Build.DenseOfArray(new[] { 1D }),
-                //    Vector<double>.Build.DenseOfArray(new[] { 0D }),
-                //};
-
-                //var trainingSet = trainingData.Zip(trainingLabels, (inputs, label) =>
-                //    Tuple.Create(Matrix<double>.Build.DenseOfColumnVectors(inputs),
-                //                 Matrix<double>.Build.DenseOfColumnVectors(label)))
-                //    .ToArray();
-
-                //var t = trainingData.Select(row => Matrix<double>.Build.DenseOfColumnVectors(row));
-
-                //net.Train(new[] { Tuple.Create(Matrix<double>.Build.Random(784, 50000), Matrix<double>.Build.Random(10, 1)) });
-                //net.Train(trainingSetInput);
                 Console.WriteLine("Network training starts: " + watch.Elapsed);
-                net.Train(trainingSetInput, epochs: 30, miniBatchSize: 20, learningRate: 3);
+                net.Train(trainingSetInput, testData, epochs: 30, miniBatchSize: 10, learningRate: 2);
                 Console.WriteLine("Network training finished : " + watch.Elapsed);
 
             }
@@ -83,8 +66,7 @@ namespace DigitRecognitionNeuralNetwork
                 var input = testSet.Select(t => t.Item1).ToArray();
                 var output = testSet.Select(t => t.Item2).ToArray();
                 Console.WriteLine("Test set finished loading: " + watch.Elapsed);
-                //var test = new[] { Vector<double>.Build.DenseOfArray(new[] { 1D }) };
-                //test.Select(t => Matrix<double>.Build.DenseOfColumnVectors(t));
+
                 Console.WriteLine("Network test starts: " + watch.Elapsed);
                 var result = net.Test(input);
                 var guesses = result;
@@ -95,7 +77,6 @@ namespace DigitRecognitionNeuralNetwork
                 {
                     Console.WriteLine($"Label: { output[i] }, Guessed: { guesses[i] }");
                 }
-                //Console.WriteLine(string.Join<Matrix<double>>(Environment.NewLine, result));
             }
         }
 

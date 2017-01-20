@@ -61,9 +61,11 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="data\train\t10k.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="data\train\train.json" />
+    <None Include="data\train\train.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />

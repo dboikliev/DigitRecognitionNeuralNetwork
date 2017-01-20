@@ -56,7 +56,7 @@ namespace DigitRecognition
             return matrix.Map(Sigmoid);
         }
 
-        public void Train(Tuple<Matrix<double>, Matrix<double>>[] trainingSet, int epochs = 30, int miniBatchSize = 20, double learningRate = 3)
+        public void Train(Tuple<Matrix<double>, Matrix<double>>[] trainingSet, Tuple<Matrix<double>, Matrix<double>>[] testdata, int epochs = 30, int miniBatchSize = 20, double learningRate = 3)
         {
             for (int j = 0; j < epochs; j++)
             {
@@ -68,6 +68,19 @@ namespace DigitRecognition
                     //var miniBatch = trainingSet.Skip(i).Take(miniBatchSize).ToArray();
                     UpdateMiniBatch(miniBatch, learningRate);
                 }
+
+                var correct = 0;
+                for (int i = 0; i < testdata.Length; i++)
+                {
+                    var result = FeedForward(trainingSet[i].Item1);
+                    var guessed = result.RowSums().MaximumIndex();
+                    var actual = trainingSet[i].Item2.RowSums().MaximumIndex();
+                    if (guessed == actual)
+                    {
+                        correct++;
+                    }
+                }
+                Console.WriteLine($"Epoch: { j }, Correct: { correct } / { testdata.Length }");
             }
             //UpdateMiniBatch(null, 1);
         }
