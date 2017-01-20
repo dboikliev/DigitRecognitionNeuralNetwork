@@ -12,8 +12,8 @@ namespace DigitRecognition
     {
         private readonly int _layersCount;
         private readonly int[] _sizes;
-        private readonly Matrix<double>[] _biases;
-        private readonly Matrix<double>[] _weights;
+        private Matrix<double>[] _biases;
+        private Matrix<double>[] _weights;
 
         public Network(params int[] sizes)
         {
@@ -35,15 +35,21 @@ namespace DigitRecognition
 
         private Matrix<double> FeedForward(Matrix<double> a)
         {
-            a = a.Transpose();
+            //a = a.Transpose();
             var biasWeightPairs = _biases.Zip(_weights, (bias, weight) => new { bias, weight });
             foreach (var tuple in biasWeightPairs)
             {
-                a *= tuple.weight;
-                a += tuple.bias.Transpose();
+                a = tuple.weight * a;
+                a += tuple.bias;
                 a = Sigmoid(a);
             }
             return a;
+        }
+
+        public Matrix<double> Test(Matrix<double> input)
+        {
+            var result = FeedForward(input);
+            return result;
         }
 
         private Matrix<double> Sigmoid(Matrix<double> matrix)
@@ -51,12 +57,15 @@ namespace DigitRecognition
             return matrix.Map(Sigmoid);
         }
 
-        public void Train(Tuple<Matrix<double>, Matrix<double>>[] trainingSet, int epochs = 30, int miniBatchSize = 20, double learningRate = 0.9)
+        public void Train(Tuple<Matrix<double>, Matrix<double>>[] trainingSet, int epochs = 30, int miniBatchSize = 20, double learningRate = 3)
         {
-            for (int i = 0; i < trainingSet.Length; i += miniBatchSize)
+            for (int j = 0; j < epochs; j++)
             {
-                var miniBatch = trainingSet.Skip(i).Take(miniBatchSize).ToArray();
-                UpdateMiniBatch(miniBatch, learningRate);
+                for (int i = 0; i < trainingSet.Length; i += miniBatchSize)
+                {
+                    var miniBatch = trainingSet.Skip(i).Take(miniBatchSize).ToArray();
+                    UpdateMiniBatch(miniBatch, learningRate);
+                }
             }
             //UpdateMiniBatch(null, 1);
         }
@@ -70,8 +79,6 @@ namespace DigitRecognition
             var nablaW = _weights
                 .Select(w => Matrix<double>.Build.Dense(w.RowCount, w.ColumnCount, 0))
                 .ToArray();
-            Console.WriteLine(string.Join<Matrix<double>>(Environment.NewLine, nablaB));
-            Console.WriteLine(string.Join<Matrix<double>>(Environment.NewLine, nablaW));
 
             for (int i = 0; i < miniBatch.Length; i++)
             {
@@ -85,11 +92,13 @@ namespace DigitRecognition
                     .Select(pair => pair.nw + pair.dnw).ToArray();
             }
 
-            _weights.Zip(nablaW, (w, nw) => new { w, nw })
-                .Select(pair => pair.w - (learningRate / miniBatch.Length) * pair.nw);
+            _weights = _weights.Zip(nablaW, (w, nw) => new { w, nw })
+                .Select(pair => pair.w - (learningRate / miniBatch.Length) * pair.nw)
+                .ToArray();
 
-            _biases.Zip(nablaW, (b, nb) => new { b, nb })
-                .Select(pair => pair.b - (learningRate / miniBatch.Length) * pair.nb);
+            _biases = _biases.Zip(nablaB, (b, nb) => new { b, nb })
+                .Select(pair => pair.b - (learningRate / miniBatch.Length) * pair.nb)
+                .ToArray();
         }
 
         private Tuple<Matrix<double>[], Matrix<double>[]> Backprop(Matrix<double> input, Matrix<double> output)
@@ -109,7 +118,6 @@ namespace DigitRecognition
             var zs = new List<Matrix<double>>();
 
             var biasWeightPairs = _biases.Zip(_weights, (bias, weight) => new { bias, weight });
-            //activation = activation.Transpose();
             foreach (var pair in biasWeightPairs)
             {
                 var z = pair.weight.Multiply(activation) + pair.bias;
@@ -118,11 +126,12 @@ namespace DigitRecognition
                 activations.Add(activation);
             }
 
-            var delta = CostDerivative(activations[activations.Count - 1], output) * Sigmoid(zs[zs.Count - 1]);
-            Console.WriteLine(delta);
+            var delta = CostDerivative(activations[activations.Count - 1], output)
+                .PointwiseMultiply(Sigmoid(zs[zs.Count - 1]));
+
+            //Console.WriteLine("Error " + delta);
             nablaB[nablaB.Length - 1] = delta;
             nablaW[nablaW.Length - 1] = (delta * activations[activations.Count - 2].Transpose());
-            Console.WriteLine(string.Join<Matrix<double>>(Environment.NewLine, nablaW));
 
             var range = Enumerable.Range(2, _layersCount - 2);
             foreach (var i in range)
