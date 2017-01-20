@@ -22,7 +22,6 @@ namespace DigitRecognition
             _biases = sizes.Skip(1).Select(size => Matrix<double>.Build.Random(size, 1)).ToArray();
             _weights = sizes.Take(sizes.Length - 1).Zip(sizes.Skip(1), (second, first) =>
             {
-                Console.WriteLine($"{ first} {second}");
                 return Matrix<double>.Build.Random(first, second);
             }).ToArray();
         }
@@ -33,6 +32,7 @@ namespace DigitRecognition
             return SpecialFunctions.Logistic(z);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Matrix<double> FeedForward(Matrix<double> a)
         {
             //a = a.Transpose();
@@ -46,9 +46,10 @@ namespace DigitRecognition
             return a;
         }
 
-        public Matrix<double> Test(Matrix<double> input)
+        public Matrix<double>[] Test(Matrix<double>[] inputs)
         {
-            var result = FeedForward(input);
+            var result = inputs.Select(i => FeedForward(i))
+                .ToArray();
             return result;
         }
 

@@ -1,6 +1,7 @@
 ﻿using DigitRecognition;
 using MathNet.Numerics.LinearAlgebra;
 using System;
+using System.Diagnostics;
 using System.Linq;
 
 namespace DigitRecognitionNeuralNetwork
@@ -24,7 +25,7 @@ namespace DigitRecognitionNeuralNetwork
 
             //    return Tuple.Create(imageData, labelData);
             //}).ToArray();
-
+            Console.WriteLine();
             var trainingData = new Vector<double>[]
             {
                     Vector<double>.Build.DenseOfArray(new [] { 0D, 0D }),
@@ -46,21 +47,30 @@ namespace DigitRecognitionNeuralNetwork
                 return Tuple.Create(Matrix<double>.Build.DenseOfColumnVectors(inputs), Matrix<double>.Build.DenseOfColumnVectors(label));
             }).ToArray();
 
+            var watch = new Stopwatch();
+            watch.Start();
+
             var net = new Network(2, 40, 1);
+            Console.WriteLine("Network created: " + watch.Elapsed);
             //var t = trainingData.Select(row => Matrix<double>.Build.DenseOfColumnVectors(row));
 
             //net.Train(new[] { Tuple.Create(Matrix<double>.Build.Random(784, 50000), Matrix<double>.Build.Random(10, 1)) });
             //net.Train(trainingSetInput);
-            net.Train(trainingSet, epochs: 100000, miniBatchSize: 4, learningRate: 0.005);
+            net.Train(trainingSet, epochs: 50000, miniBatchSize: 4, learningRate: 0.005);
+            Console.WriteLine("Network trained: " + watch.Elapsed);
 
             var test = new[]
             {
+                Vector<double>.Build.DenseOfArray(new[] { 0D, 0D }),
+                Vector<double>.Build.DenseOfArray(new[] { 1D, 0D }),
+                Vector<double>.Build.DenseOfArray(new[] { 0D, 1D }),
                 Vector<double>.Build.DenseOfArray(new[] { 1D, 1D }),
             };
-
-            Console.WriteLine("RESULT");
-            var result = net.Test(Matrix<double>.Build.DenseOfColumnVectors(test));
-            Console.WriteLine(result);
+            //test.Select(t => Matrix<double>.Build.DenseOfColumnVectors(t));
+            Console.WriteLine("Network test begins: " + watch.Elapsed);
+            var result = net.Test(test.Select(t => Matrix<double>.Build.DenseOfColumnVectors(t)).ToArray());
+            Console.WriteLine(string.Join<Matrix<double>>(Environment.NewLine, result));
+            Console.WriteLine("Network test finisehd: " + watch.Elapsed);
             //}
         }
 
