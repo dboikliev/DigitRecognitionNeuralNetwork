@@ -1,4 +1,5 @@
 ﻿using MathNet.Numerics;
+using MathNet.Numerics.Distributions;
 using MathNet.Numerics.LinearAlgebra;
 using System;
 using System.Collections.Generic;
@@ -19,11 +20,8 @@ namespace DigitRecognition
         {
             _layersCount = sizes.Length;
             _sizes = sizes;
-            _biases = sizes.Skip(1).Select(size => Matrix<double>.Build.Random(size, 1)).ToArray();
-            _weights = sizes.Take(sizes.Length - 1).Zip(sizes.Skip(1), (second, first) =>
-            {
-                return Matrix<double>.Build.Random(first, second);
-            }).ToArray();
+            _biases = sizes.Skip(1).Select(size => Matrix<double>.Build.Random(size, 1, new Normal())).ToArray();
+            _weights = sizes.Take(sizes.Length - 1).Zip(sizes.Skip(1), (second, first) => Matrix<double>.Build.Random(first, second, new Normal())).ToArray();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -64,7 +62,10 @@ namespace DigitRecognition
             {
                 for (int i = 0; i < trainingSet.Length; i += miniBatchSize)
                 {
-                    var miniBatch = trainingSet.Skip(i).Take(miniBatchSize).ToArray();
+                    var miniBatch = new Tuple<Matrix<double>, Matrix<double>>[miniBatchSize];
+                    Array.Copy(trainingSet, i, miniBatch, 0, miniBatchSize);
+
+                    //var miniBatch = trainingSet.Skip(i).Take(miniBatchSize).ToArray();
                     UpdateMiniBatch(miniBatch, learningRate);
                 }
             }

@@ -1,77 +1,102 @@
 ﻿using DigitRecognition;
+using MathNet.Numerics;
 using MathNet.Numerics.LinearAlgebra;
+using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 
 namespace DigitRecognitionNeuralNetwork
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            //using (var reader = new StreamReader(File.Open(@".\data\train\train.json", FileMode.Open)))
-            //{
-            //var json = reader.ReadToEnd();
-            //var obj = JsonConvert.DeserializeObject<Image[]>(json);
-            //Console.WriteLine(string.Join(", ", obj));
+            var watch = Stopwatch.StartNew();
 
-            //var trainingSetInput = obj.Select(img =>
-            //{
-            //    var imageData = Matrix<double>.Build.DenseOfColumnVectors(Vector<double>.Build.DenseOfArray(img.Pixels));
-            //    double[] labels = new double[10];
-            //    labels[img.Label] = 1;
-            //    var labelData = Matrix<double>.Build.DenseOfColumnVectors(Vector<double>.Build.DenseOfArray(labels));
+            Console.WriteLine("Network initialization starts: " + watch.Elapsed);
+            var net = new Network(784, 40, 10);
+            Console.WriteLine("Network  initialization finished: " + watch.Elapsed);
 
-            //    return Tuple.Create(imageData, labelData);
-            //}).ToArray();
-            Console.WriteLine();
-            var trainingData = new Vector<double>[]
+            Console.WriteLine("Training set starts loading: " + watch.Elapsed);
+            using (var reader = new StreamReader(File.Open(@".\data\train\train.json", FileMode.Open)))
             {
-                    Vector<double>.Build.DenseOfArray(new [] { 0D, 0D }),
-                    Vector<double>.Build.DenseOfArray(new [] { 0D, 1D }),
-                    Vector<double>.Build.DenseOfArray(new [] { 1D, 0D }),
-                    Vector<double>.Build.DenseOfArray(new [] { 1D, 1D }),
-            };
+                var json = reader.ReadToEnd();
+                var obj = JsonConvert.DeserializeObject<Image[]>(json);
+                Console.WriteLine(string.Join(", ", obj));
 
-            var trainingLabels = new[]
+                var trainingSetInput = obj.Select(img =>
+                {
+                    var imageData = Matrix<double>.Build.DenseOfColumnVectors(Vector<double>.Build.DenseOfArray(img.Pixels));
+                    double[] labels = new double[10];
+                    labels[img.Label] = 1;
+                    var labelData = Matrix<double>.Build.DenseOfColumnVectors(Vector<double>.Build.DenseOfArray(labels));
+
+                    return Tuple.Create(imageData, labelData);
+                }).OrderBy(_ => Guid.NewGuid()).Take(10000).ToArray();
+
+                Console.WriteLine("Training set finished loading: " + watch.Elapsed);
+                Control.TryUseNativeMKL();
+                //var trainingData = new[]
+                //{
+                //    Vector<double>.Build.DenseOfArray(new [] { 0D }),
+                //    Vector<double>.Build.DenseOfArray(new [] { 1D }),
+                //};
+
+                //var trainingLabels = new[]
+                //{
+                //    Vector<double>.Build.DenseOfArray(new[] { 1D }),
+                //    Vector<double>.Build.DenseOfArray(new[] { 0D }),
+                //};
+
+                //var trainingSet = trainingData.Zip(trainingLabels, (inputs, label) =>
+                //    Tuple.Create(Matrix<double>.Build.DenseOfColumnVectors(inputs),
+                //                 Matrix<double>.Build.DenseOfColumnVectors(label)))
+                //    .ToArray();
+
+                //var t = trainingData.Select(row => Matrix<double>.Build.DenseOfColumnVectors(row));
+
+                //net.Train(new[] { Tuple.Create(Matrix<double>.Build.Random(784, 50000), Matrix<double>.Build.Random(10, 1)) });
+                //net.Train(trainingSetInput);
+                Console.WriteLine("Network training starts: " + watch.Elapsed);
+                net.Train(trainingSetInput, epochs: 30, miniBatchSize: 20, learningRate: 3);
+                Console.WriteLine("Network training finished : " + watch.Elapsed);
+
+            }
+
+            Console.WriteLine("Test set starts loading: " + watch.Elapsed);
+            using (var reader = new StreamReader(File.Open("./data/train/t10k.json", FileMode.Open)))
             {
-                    Vector<double>.Build.DenseOfArray(new[] { 0D }),
-                    Vector<double>.Build.DenseOfArray(new[] { 1D }),
-                    Vector<double>.Build.DenseOfArray(new[] { 1D }),
-                    Vector<double>.Build.DenseOfArray(new[] { 0D }),
-                };
+                var json = reader.ReadToEnd();
+                var images = JsonConvert.DeserializeObject<Image[]>(json);
 
-            var trainingSet = trainingData.Zip(trainingLabels, (inputs, label) =>
-            {
-                return Tuple.Create(Matrix<double>.Build.DenseOfColumnVectors(inputs), Matrix<double>.Build.DenseOfColumnVectors(label));
-            }).ToArray();
+                var testSet = images.Select(img =>
+                {
+                    var imageData = Matrix<double>.Build.DenseOfColumnVectors(Vector<double>.Build.DenseOfArray(img.Pixels));
+                    double[] labels = new double[10];
+                    labels[img.Label] = 1;
+                    var labelData = Matrix<double>.Build.DenseOfColumnVectors(Vector<double>.Build.DenseOfArray(labels));
+                    return Tuple.Create(imageData, labelData);
+                }).ToArray();
 
-            var watch = new Stopwatch();
-            watch.Start();
+                var input = testSet.Select(t => t.Item1).ToArray();
+                var output = testSet.Select(t => t.Item2).ToArray();
+                Console.WriteLine("Test set finished loading: " + watch.Elapsed);
+                //var test = new[] { Vector<double>.Build.DenseOfArray(new[] { 1D }) };
+                //test.Select(t => Matrix<double>.Build.DenseOfColumnVectors(t));
+                Console.WriteLine("Network test starts: " + watch.Elapsed);
+                var result = net.Test(input);
+                var guesses = result;
+                Console.WriteLine("Network test finished: " + watch.Elapsed);
+                Console.WriteLine("RESULTS:");
 
-            var net = new Network(2, 40, 1);
-            Console.WriteLine("Network created: " + watch.Elapsed);
-            //var t = trainingData.Select(row => Matrix<double>.Build.DenseOfColumnVectors(row));
-
-            //net.Train(new[] { Tuple.Create(Matrix<double>.Build.Random(784, 50000), Matrix<double>.Build.Random(10, 1)) });
-            //net.Train(trainingSetInput);
-            net.Train(trainingSet, epochs: 50000, miniBatchSize: 4, learningRate: 0.005);
-            Console.WriteLine("Network trained: " + watch.Elapsed);
-
-            var test = new[]
-            {
-                Vector<double>.Build.DenseOfArray(new[] { 0D, 0D }),
-                Vector<double>.Build.DenseOfArray(new[] { 1D, 0D }),
-                Vector<double>.Build.DenseOfArray(new[] { 0D, 1D }),
-                Vector<double>.Build.DenseOfArray(new[] { 1D, 1D }),
-            };
-            //test.Select(t => Matrix<double>.Build.DenseOfColumnVectors(t));
-            Console.WriteLine("Network test begins: " + watch.Elapsed);
-            var result = net.Test(test.Select(t => Matrix<double>.Build.DenseOfColumnVectors(t)).ToArray());
-            Console.WriteLine(string.Join<Matrix<double>>(Environment.NewLine, result));
-            Console.WriteLine("Network test finisehd: " + watch.Elapsed);
-            //}
+                for (int i = 0; i < output.Length; i++)
+                {
+                    Console.WriteLine($"Label: { output[i] }, Guessed: { guesses[i] }");
+                }
+                //Console.WriteLine(string.Join<Matrix<double>>(Environment.NewLine, result));
+            }
         }
 
         struct Image
