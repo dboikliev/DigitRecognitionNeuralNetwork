@@ -24,6 +24,12 @@ namespace DigitRecognition
             _weights = sizes.Take(sizes.Length - 1).Zip(sizes.Skip(1), (second, first) => Matrix<double>.Build.Random(first, second, new Normal())).ToArray();
         }
 
+        public void Load(double[][] biases, double[][,] weights)
+        {
+            _biases = biases.Select(bias => Matrix<double>.Build.DenseOfColumns(new[] { bias })).ToArray();
+            _weights = weights.Select(weight => Matrix<double>.Build.DenseOfArray(weight)).ToArray();
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private double Sigmoid(double z)
         {
@@ -44,9 +50,15 @@ namespace DigitRecognition
             return a;
         }
 
+        public Matrix<double> Test(Matrix<double> input)
+        {
+            return FeedForward(input);
+        }
+
+
         public Matrix<double>[] Test(Matrix<double>[] inputs)
         {
-            var result = inputs.Select(i => FeedForward(i))
+            var result = inputs.Select(FeedForward)
                 .ToArray();
             return result;
         }
@@ -56,7 +68,7 @@ namespace DigitRecognition
             return matrix.Map(Sigmoid);
         }
 
-        public void Train(Tuple<Matrix<double>, Matrix<double>>[] trainingSet, Tuple<Matrix<double>, Matrix<double>>[] testdata, int epochs = 30, int miniBatchSize = 20, double learningRate = 3)
+        public Tuple<double[][], double[][,]> Train(Tuple<Matrix<double>, Matrix<double>>[] trainingSet, Tuple<Matrix<double>, Matrix<double>>[] testdata, int epochs = 30, int miniBatchSize = 20, double learningRate = 3)
         {
             for (int j = 0; j < epochs; j++)
             {
@@ -82,7 +94,9 @@ namespace DigitRecognition
                 }
                 Console.WriteLine($"Epoch: { j }, Correct: { correct } / { testdata.Length }");
             }
-            //UpdateMiniBatch(null, 1);
+            var biasWeights = _biases.Select(b => b.RowSums().ToArray()).ToArray();
+            var neuronWeights = _weights.Select(w => w.ToArray()).ToArray();
+            return Tuple.Create(biasWeights, neuronWeights);
         }
 
         private void UpdateMiniBatch(Tuple<Matrix<double>, Matrix<double>>[] miniBatch, double learningRate)
