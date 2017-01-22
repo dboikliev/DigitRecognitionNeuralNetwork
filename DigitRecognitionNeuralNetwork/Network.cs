@@ -83,9 +83,9 @@ namespace DigitRecognition
                 var correct = 0;
                 for (int i = 0; i < testdata.Length; i++)
                 {
-                    var result = FeedForward(trainingSet[i].Item1);
+                    var result = FeedForward(testdata[i].Item1);
                     var guessed = result.RowSums().MaximumIndex();
-                    var actual = trainingSet[i].Item2.RowSums().MaximumIndex();
+                    var actual = testdata[i].Item2.RowSums().MaximumIndex();
                     if (guessed == actual)
                     {
                         correct++;
@@ -121,7 +121,7 @@ namespace DigitRecognition
             }
 
             _weights = _weights.Zip(nablaW, (w, nw) => new { w, nw })
-                .Select(pair => pair.w - (learningRate / miniBatch.Length) * pair.nw) 
+                .Select(pair => pair.w - (learningRate / miniBatch.Length) * pair.nw)
                 .ToArray();
 
             _biases = _biases.Zip(nablaB, (b, nb) => new { b, nb })
