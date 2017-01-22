@@ -9,7 +9,7 @@ using static System.Linq.Enumerable;
 
 namespace DigitRecognition
 {
-    class Network
+    public class Network
     {
         private readonly int _layersCount;
         private readonly int[] _sizes;
@@ -54,7 +54,6 @@ namespace DigitRecognition
         {
             return FeedForward(input);
         }
-
 
         public Matrix<double>[] Test(Matrix<double>[] inputs)
         {
@@ -122,7 +121,7 @@ namespace DigitRecognition
             }
 
             _weights = _weights.Zip(nablaW, (w, nw) => new { w, nw })
-                .Select(pair => pair.w - (learningRate / miniBatch.Length) * pair.nw)
+                .Select(pair => pair.w - (learningRate / miniBatch.Length) * pair.nw) 
                 .ToArray();
 
             _biases = _biases.Zip(nablaB, (b, nb) => new { b, nb })

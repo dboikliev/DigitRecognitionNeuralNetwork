@@ -16,37 +16,37 @@ namespace DigitRecognitionNeuralNetwork
 
         static void Main()
         {
-            Tuple<double[][], double[][,]> learned = null;
+            //Tuple<double[][], double[][,]> learned = null;
 
-            using (var biasesReader = new StreamReader(File.Open("./trained/biases.txt", FileMode.Open)))
-            using (var weightsReader = new StreamReader(File.Open("./trained/weights.txt", FileMode.Open)))
-            {
-                var biasesJson = biasesReader.ReadToEnd();
-                var weightsJson = weightsReader.ReadToEnd();
-                if (biasesJson.Length > 0 && weightsJson.Length > 0)
-                {
-                    var biases = JsonConvert.DeserializeObject<double[][]>(biasesJson);
-                    var weights = JsonConvert.DeserializeObject<double[][,]>(weightsJson);
-                    learned = Tuple.Create(biases, weights);
-                }
-            }
+            //using (var biasesReader = new StreamReader(File.Open("./trained/biases.txt", FileMode.Open)))
+            //using (var weightsReader = new StreamReader(File.Open("./trained/weights.txt", FileMode.Open)))
+            //{
+            //    var biasesJson = biasesReader.ReadToEnd();
+            //    var weightsJson = weightsReader.ReadToEnd();
+            //    if (biasesJson.Length > 0 && weightsJson.Length > 0)
+            //    {
+            //        var biases = JsonConvert.DeserializeObject<double[][]>(biasesJson);
+            //        var weights = JsonConvert.DeserializeObject<double[][,]>(weightsJson);
+            //        learned = Tuple.Create(biases, weights);
+            //    }
+            //}
 
             Console.WriteLine("Network initialization starts: " + _watch.Elapsed);
             var net = new Network(784, 40, 20, 10);
             Console.WriteLine("Network  initialization finished: " + _watch.Elapsed);
 
-            if (learned == null)
+            //if (learned == null)
             {
                 Console.WriteLine("Training set starts loading: " + _watch.Elapsed);
-                learned = Train(net);
-                SaveLearnedWeights(learned);
+                var learned = Train(net);
+                //SaveLearnedWeights(learned);
                 RunTestSet(net, learned);
             }
-            else
-            {
-                net.Load(learned.Item1, learned.Item2);
-                TestImage(net);
-            }
+            //else
+            //{
+            //    net.Load(learned.Item1, learned.Item2);
+            //    TestImage(net);
+            //}
         }
 
         static void SaveLearnedWeights(Tuple<double[][], double[][,]> learned)

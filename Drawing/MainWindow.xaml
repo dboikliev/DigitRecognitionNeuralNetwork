@@ -1,0 +1,27 @@
+﻿<Window x:Class="Drawing.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Drawing"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="430" Width="525">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="300"/>
+            <RowDefinition Height="100"/>
+        </Grid.RowDefinitions>
+        <Border Height="280" Width="280" BorderBrush="Black" BorderThickness="2">
+            <InkCanvas Background="Black"  Name="DrawingArea" Width="280" Height="280">
+                <InkCanvas.DefaultDrawingAttributes>
+                    <DrawingAttributes FitToCurve="False" Color="White" Height="10" Width="10" StylusTip="Rectangle"/>
+                </InkCanvas.DefaultDrawingAttributes>
+            </InkCanvas>
+        </Border>
+        <StackPanel Grid.Row="1" >
+            <Button Width="90" Height="20" Content="Guess" Click="Button_Click"/>
+            <Button  Width="90" Height="20" Content="Reset" Click="Button_Click_1"/>
+        </StackPanel>
+    </Grid>
+</Window>
